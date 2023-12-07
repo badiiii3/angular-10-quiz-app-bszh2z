@@ -1,0 +1,145 @@
+<ng-container>
+  <mat-card
+    [@changeRoute]="animationState$ | async"
+    (@changeRoute.done)="animationDoneHandler()"
+  >
+    <codelab-quiz-header></codelab-quiz-header>
+  
+    <mat-card-content *ngIf="combinedQuestionData$ | async as data">
+      <!-- the scoreboard -->
+      <codelab-scoreboard></codelab-scoreboard>
+    
+      <!-- the question and options -->
+      <codelab-quiz-content-component
+        *ngIf="questionToDisplay" 
+        [questions]="questions"
+        [question]="questionToDisplay"
+        [questionToDisplay]="questionToDisplay"
+        [options]="optionsToDisplay"
+        [explanationText]="explanationText$ | async"  
+        [correctAnswersText]="correctAnswersText"
+      >
+      </codelab-quiz-content-component>
+      <ng-content select="[question-content]"></ng-content>
+
+      <ng-container *ngIf="optionsToDisplay">
+        <codelab-quiz-question
+          *ngIf="data?.questionText || data?.correctAnswersText"
+          [data]="data"
+          [questionToDisplay]="questionToDisplay"
+          [question]="questionToDisplay"
+          [options]="optionsToDisplay"
+          [optionsToDisplay]="optionsToDisplay"
+          (answer)="selectedAnswer($event)"
+          [selectedOption]="selectedOption$ | async"
+          (formReady)="form = $event"
+          [currentQuestion]="currentQuestion"
+          [currentQuestion$]="currentQuestion$ | async"
+          [currentQuestionIndex]="currentQuestionIndex"
+          [previousQuestionIndex]="previousQuestionIndex"
+          [multipleAnswer]="multipleAnswer"
+          (answersChange)="checkIfAnsweredCorrectly()"
+          [explanationTextValue$]="explanationTextValue$ | async"
+          [selectionMessage]="selectionMessage$ | async"
+          [showFeedback]="showFeedback"
+        ></codelab-quiz-question>
+      </ng-container>
+      <ng-template #noQuestion>
+        <p>No question available.</p>
+      </ng-template>
+    </mat-card-content>
+    
+  
+    <mat-card-footer [ngClass]="cardFooterClass">
+      <!-- selection message/next message -->
+      <h5 class="selection-message">
+        {{ (selectionMessage$ | async) || selectOptionText }}
+      </h5>
+  
+      <!-- paging -->
+      <section class="paging">
+        <mat-card-actions
+          [class.last-question]="shouldApplyLastQuestionClass()"
+        >
+          <div class="prev-question-nav" [hidden]="shouldHidePrevQuestionNav()">
+            <button
+              type="button"
+              mat-icon-button
+              (click)="advanceToPreviousQuestion()"
+              (window:keydown.ArrowLeft)="advanceToPreviousQuestion()"
+              matTooltip="&laquo; Previous Question"
+              matTooltipPosition="above"
+              aria-label="Previous Question"
+            >
+              <i class="material-icons">navigate_before</i>
+            </button>
+          </div>
+  
+          <div class="restart-nav" [hidden]="shouldHideRestartNav()">
+            <button
+              type="button"
+              mat-icon-button
+              (click)="restartQuiz()"
+              matTooltip="Restart Quiz"
+              matTooltipPosition="above"
+              aria-label="Restart Quiz"
+            >
+              <i class="material-icons">replay</i>
+            </button>
+          </div>
+  
+          <div class="next-question-nav" [hidden]="shouldHideShowScoreNav()"
+            matTooltip="Next Question &raquo;"
+            matTooltipPosition="above"
+          >
+            <button
+              type="button"
+              mat-icon-button
+              (click)="advanceToNextQuestion()"
+              (window:keydown.ArrowRight)="advanceToNextQuestion()"
+              (window:keydown.Enter)="advanceToNextQuestion()"
+              aria-label="Next Question"
+            >
+              <i class="material-icons">navigate_next</i>
+            </button>
+          </div>
+  
+          <div class="show-score-nav">
+            <button *ngIf="shouldHideShowScoreNav()"
+              type="submit"
+              mat-raised-button
+              disableRipple="true"
+              (click)="advanceToResults()"
+              (window:keydown.Enter)="advanceToResults()"
+              (window:keydown.ArrowRight)="advanceToResults()"
+              class="btn btn-outline-primary"
+              aria-label="Show Your Score"
+            >
+              <i class="material-icons">score</i>&nbsp;&nbsp;<strong
+                >Show Your Score</strong
+              >
+            </button>
+          </div>
+        </mat-card-actions>
+      </section>
+  
+      <!-- progress bar -->
+      <section class="progress-bar" *ngIf="shouldHideProgressBar()">
+        <ngb-progressbar
+          max="100"
+          type="success"
+          [striped]="true"
+          [animated]="true"
+          [value]="progressValue"
+          class="progress-bar bg-info"
+        >
+          <!-- <strong>{{ progressValue.toFixed(0) }}%</strong> -->
+        </ngb-progressbar>
+      </section>
+    </mat-card-footer>
+  </mat-card>
+  <ng-template #loading>
+    <p>Loading quiz&hellip;</p>
+  </ng-template>
+</ng-container>
+  
